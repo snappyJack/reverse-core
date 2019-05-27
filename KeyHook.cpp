@@ -55,7 +55,7 @@ extern "C" {
 #endif
 	__declspec(dllexport) void HookStart()//这个函数要从本DLL导出。我要给别人用。
 	{
-		g_hHook = SetWindowsHookEx(WH_KEYBOARD, KeyboardProc, g_hInstance, 0);
+		g_hHook = SetWindowsHookEx(WH_KEYBOARD, KeyboardProc, g_hInstance, 0);//g_hInstance：dll文件句柄
 	}
 
 	__declspec(dllexport) void HookStop()//这个函数要从本DLL导出。我要给别人用。
