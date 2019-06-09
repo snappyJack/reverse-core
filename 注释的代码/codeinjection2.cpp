@@ -110,13 +110,13 @@ BOOL InjectCode(DWORD dwPID)
     HANDLE          hThread         = NULL;
     LPVOID          pRemoteBuf[2]   = {0,};
 
-    hMod = GetModuleHandleA("kernel32.dll");
+    hMod = GetModuleHandleA("kernel32.dll");//本进程的dll句柄
 
     // set THREAD_PARAM
-    param.pFunc[0] = GetProcAddress(hMod, "LoadLibraryA");
-    param.pFunc[1] = GetProcAddress(hMod, "GetProcAddress");
+    param.pFunc[0] = GetProcAddress(hMod, "LoadLibraryA");//本进程的函数地址
+    param.pFunc[1] = GetProcAddress(hMod, "GetProcAddress");//本进程的函数地址
 
-    // 打开程序
+    // 打开注入的进程
     if ( !(hProcess = OpenProcess(PROCESS_ALL_ACCESS,               // dwDesiredAccess
                                   FALSE,                            // bInheritHandle
                                   dwPID)) )                         // dwProcessId
@@ -125,10 +125,10 @@ BOOL InjectCode(DWORD dwPID)
         return FALSE;
     }
 
-    // 为数据分配内存
+    // 为数据分配内存，返回的是地址
     if( !(pRemoteBuf[0] = VirtualAllocEx(hProcess,                  // hProcess
                                          NULL,                      // lpAddress
-                                         sizeof(THREAD_PARAM),      // dwSize
+                                         sizeof(THREAD_PARAM),      // dwSize  数据的大小
                                          MEM_COMMIT,                // flAllocationType
                                          PAGE_READWRITE)) )         // flProtect
     {
@@ -146,7 +146,7 @@ BOOL InjectCode(DWORD dwPID)
         return FALSE;
     }
 
-    // 为代码分配内存
+    // 为代码分配内存，返回的是注入线程中的地址
     if( !(pRemoteBuf[1] = VirtualAllocEx(hProcess,                  // hProcess
                                          NULL,                      // lpAddress
                                          sizeof(g_InjectionCode),   // dwSize
