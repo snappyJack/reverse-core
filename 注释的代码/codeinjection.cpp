@@ -61,15 +61,15 @@ BOOL InjectCode(DWORD dwPID)
     LPVOID          pRemoteBuf[2]   = {0,};
     DWORD           dwSize          = 0;
 
-    hMod = GetModuleHandleA("kernel32.dll");
+    hMod = GetModuleHandleA("kernel32.dll");//获取本进程中kernel32.dll句柄
 
     // set THREAD_PARAM
-    param.pFunc[0] = GetProcAddress(hMod, "LoadLibraryA");
-    param.pFunc[1] = GetProcAddress(hMod, "GetProcAddress");
-    strcpy_s(param.szBuf[0], "user32.dll");
-    strcpy_s(param.szBuf[1], "MessageBoxA");
-    strcpy_s(param.szBuf[2], "www.reversecore.com");
-    strcpy_s(param.szBuf[3], "ReverseCore");
+    param.pFunc[0] = GetProcAddress(hMod, "LoadLibraryA");//或取本进程LoadLibraryA函数地址       函数地址
+    param.pFunc[1] = GetProcAddress(hMod, "GetProcAddress");//获取本进程GetProcAddress函数地址       函数地址
+    strcpy_s(param.szBuf[0], "user32.dll");//复制字符串              字符串地址
+    strcpy_s(param.szBuf[1], "MessageBoxA");//复制字符串             字符串地址
+    strcpy_s(param.szBuf[2], "www.reversecore.com");//复制字符串     字符串地址
+    strcpy_s(param.szBuf[3], "ReverseCore");//复制字符串             字符串地址
 
     // 打开进程
     if ( !(hProcess = OpenProcess(PROCESS_ALL_ACCESS,   // dwDesiredAccess
@@ -127,8 +127,8 @@ BOOL InjectCode(DWORD dwPID)
     if( !(hThread = CreateRemoteThread(hProcess,            // hProcess
                                        NULL,                // lpThreadAttributes
                                        0,                   // dwStackSize
-                                       (LPTHREAD_START_ROUTINE)pRemoteBuf[1],     // dwStackSize
-                                       pRemoteBuf[0],       // lpParameter
+                                       (LPTHREAD_START_ROUTINE)pRemoteBuf[1],     // 注入线程的代码地址
+                                       pRemoteBuf[0],       // lpParameter       //注入线程的数据地址
                                        0,                   // dwCreationFlags
                                        NULL)) )             // lpThreadId
     {
