@@ -8,9 +8,6 @@ BYTE g_chINT3 = 0xCC, g_chOrgByte = 0;
 BOOL OnCreateProcessDebugEvent(LPDEBUG_EVENT pde) {
     g_pfWriteFile = GetProcAddress(GetModuleHandleA("kernel32.dll"), "WriteFile");//或取WriteFile的API地址（其实获取的是调试者的地址，但是没有影响）
 
-    // API Hook - WriteFile()
-    //   霉 锅掳 byte 甫 0xCC (INT 3) 栏肺 函版 
-    //   (orginal byte 绰 归诀)
     memcpy(&g_cpdi, &pde->u.CreateProcessInfo, sizeof(CREATE_PROCESS_DEBUG_INFO));
     ReadProcessMemory(g_cpdi.hProcess, g_pfWriteFile,
                       &g_chOrgByte, sizeof(BYTE), NULL);//g_cpdi.hProcess是被调试进程的句柄，g_pfWriteFile是WriteFile API的地址 ，此函数读取api第一个字节，存储到g_chOrgByte中
