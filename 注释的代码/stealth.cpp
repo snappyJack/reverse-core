@@ -50,6 +50,8 @@ TCHAR g_szProcName[MAX_PATH] = {0,};//创建名为g_szProcName的缓冲区
 BYTE g_pOrgBytes[5] = {0,};
 
 
+//此函数用来将api前5个字节改为jmpxxxx
+//szDllName：dll名称，szFuncName：api名称，pfnNew：勾取函数地址，pOrgBytes：存储原来5个字节的缓冲区
 BOOL hook_by_code(LPCSTR szDllName, LPCSTR szFuncName, PROC pfnNew, PBYTE pOrgBytes) {
     FARPROC pfnOrg;
     DWORD dwOldProtect, dwAddress;
@@ -63,7 +65,7 @@ BOOL hook_by_code(LPCSTR szDllName, LPCSTR szFuncName, PROC pfnNew, PBYTE pOrgBy
     VirtualProtect((LPVOID) pfnOrg, 5, PAGE_EXECUTE_READWRITE, &dwOldProtect);//为了修改5字节，先向内存添加“写”的属性
     memcpy(pOrgBytes, pfnOrg, 5);//备份原有代码
     dwAddress = (DWORD) pfnNew - (DWORD) pfnOrg - 5;//计算JMP地址   => XXXX = pfnNew - pfnOrg - 5
-    memcpy(&pBuf[1], &dwAddress, 4);
+    memcpy(&pBuf[1], &dwAddress, 4);//E9，剩下后面4个字节为跳转的地址
     memcpy(pfnOrg, pBuf, 5);//“钩子”：修改5个字节
     VirtualProtect((LPVOID) pfnOrg, 5, dwOldProtect, &dwOldProtect);//恢复内存属性
     return TRUE;
@@ -85,7 +87,7 @@ BOOL unhook_by_code(LPCSTR szDllName, LPCSTR szFuncName, PBYTE pOrgBytes) {
 }
 
 
-NTSTATUS WINAPI NewZwQuerySystemInformation(
+NTSTATUS WINAPI NewZwQuerySystemInformation(//勾取过程
         SYSTEM_INFORMATION_CLASS SystemInformationClass,
         PVOID SystemInformation,
         ULONG SystemInformationLength,
@@ -138,17 +140,16 @@ NTSTATUS WINAPI NewZwQuerySystemInformation(
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
     char szCurProc[MAX_PATH] = {0,};
     char *p = NULL;
-    //异常处理
     GetModuleFileNameA(NULL, szCurProc, MAX_PATH);
     p = strrchr(szCurProc, '\\');
     if ((p != NULL) && !_stricmp(p + 1, "HideProc.exe"))//若为HideProc.exe则不进行勾取
-        return TRUE;
+        return TRUE;//进行异常处理
     switch (fdwReason) {
-        case DLL_PROCESS_ATTACH : //API勾取
+        case DLL_PROCESS_ATTACH : //dll加载时候，API勾取
             hook_by_code(DEF_NTDLL, DEF_ZWQUERYSYSTEMINFORMATION,
                          (PROC) NewZwQuerySystemInformation, g_pOrgBytes);
             break;
-        case DLL_PROCESS_DETACH : //API脱钩
+        case DLL_PROCESS_DETACH : //dll卸载时候，API脱钩
             unhook_by_code(DEF_NTDLL, DEF_ZWQUERYSYSTEMINFORMATION,
                            g_pOrgBytes);
             break;
